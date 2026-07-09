@@ -180,9 +180,31 @@ function buildSpecsTableHtml(specifications, title) {
   return html;
 }
 
+// Helper: Extract any YouTube iframe embeds from HTML
+function extractYoutubeEmbeds(html) {
+  if (!html) return '';
+  const iframeRegex = /<iframe[^>]*src="[^"]*youtube\.com[^"]*"[^>]*>.*?<\/iframe>/gi;
+  const matches = html.match(iframeRegex);
+  if (matches && matches.length > 0) {
+    return '\n<p>' + matches.join('</p>\n<p>') + '</p>\n\n';
+  }
+  const fallbackRegex = /<iframe[^>]*src=[^>]*youtube[^>]*>.*?<\/iframe>/gi;
+  const fallbackMatches = html.match(fallbackRegex);
+  if (fallbackMatches && fallbackMatches.length > 0) {
+    return '\n<p>' + fallbackMatches.join('</p>\n<p>') + '</p>\n\n';
+  }
+  return '';
+}
+
 // Helper: Compile description HTML from segments
-function compileDescriptionHtml(aiData, specsTableHtml) {
+function compileDescriptionHtml(aiData, specsTableHtml, originalDescriptionHtml) {
   let html = '';
+  
+  // Extract and prepend youtube videos from original description if any exist
+  const youtubeVideos = extractYoutubeEmbeds(originalDescriptionHtml);
+  if (youtubeVideos) {
+    html += youtubeVideos;
+  }
   
   // 1. Description
   if (aiData.description_sections.short_intro) {
@@ -356,7 +378,7 @@ async function enrichProduct(client, openai, productId, dryRun = true) {
   console.log(`Is Vehicle Specific: ${aiData.is_vehicle_specific}`);
   
   const specsTableHtml = buildSpecsTableHtml(aiData.specifications, aiData.clean_title);
-  const newDescriptionHtml = compileDescriptionHtml(aiData, specsTableHtml);
+  const newDescriptionHtml = compileDescriptionHtml(aiData, specsTableHtml, product.descriptionHtml);
   
   if (dryRun) {
     console.log(`⚠️ Dry run enabled. Logged changes only.`);

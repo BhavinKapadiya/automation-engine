@@ -253,7 +253,7 @@ app.post('/api/products/:id/generate', async (req, res) => {
     
     // Compile proposed description HTML using standard specifications
     const specsTableHtml = buildSpecsTableHtml(aiData.specifications, product.title);
-    const compiledDescriptionHtml = compileDescriptionHtml(aiData, specsTableHtml);
+    const compiledDescriptionHtml = compileDescriptionHtml(aiData, specsTableHtml, product.descriptionHtml);
     
     res.json({
       id: product.id,

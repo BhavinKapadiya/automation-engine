@@ -95,6 +95,18 @@ function renderProductList() {
     return true; // all
   });
 
+  // Update tab counts
+  let pendingCount = 0;
+  let reviewedCount = 0;
+  products.forEach(p => {
+    const isReviewed = p.isReviewed || (statuses[p.id] && statuses[p.id].status === 'Reviewed');
+    if (isReviewed) reviewedCount++;
+    else pendingCount++;
+  });
+  filterAll.textContent = `All (${products.length})`;
+  filterPending.textContent = `Pending (${pendingCount})`;
+  filterReviewed.textContent = `Reviewed (${reviewedCount})`;
+
   if (filtered.length === 0) {
     productListContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No products found.</div>';
     return;
@@ -158,7 +170,7 @@ async function selectProduct(shopifyId) {
     originalSeoDesc.textContent = selectedProduct.seo.description || 'Using default product meta description';
     
     // Clear Right column inputs (Editor fields)
-    editDescriptionHtml.value = '';
+    editDescriptionHtml.innerHTML = '';
     editSeoTitle.value = '';
     editSeoDesc.value = '';
     editProductType.value = selectedProduct.productType || '';
@@ -208,7 +220,7 @@ async function generateAiCopy() {
     lastAiResponse = data; // Cache spec sheets and metafield output JSON
     
     // Populate form fields
-    editDescriptionHtml.value = data.compiledDescriptionHtml;
+    editDescriptionHtml.innerHTML = data.compiledDescriptionHtml;
     editSeoTitle.value = data.seoTitle;
     editSeoDesc.value = data.seoMetaDescription;
     
@@ -257,7 +269,7 @@ async function publishToShopify() {
   if (!selectedProduct) return;
   const id = selectedProduct.id.replace('gid://shopify/Product/', '');
   
-  const descriptionHtml = editDescriptionHtml.value.trim();
+  const descriptionHtml = editDescriptionHtml.innerHTML.trim();
   const seoTitle = editSeoTitle.value.trim();
   const seoMetaDescription = editSeoDesc.value.trim();
   const productType = editProductType.value.trim();

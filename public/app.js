@@ -142,7 +142,8 @@ function renderProductList() {
     div.className = `product-item ${selectedProduct && selectedProduct.id === p.id ? 'active' : ''}`;
     div.dataset.id = p.id;
     
-    const thumbUrl = p.imageUrl || 'https://via.placeholder.com/48';
+    // Use an inline SVG data URI as fallback instead of external placeholder which might be blocked
+    const thumbUrl = p.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjZWVlIi8+PC9zdmc+';
     
     div.innerHTML = `
       <img src="${thumbUrl}" class="product-thumb" alt="">

@@ -1,4 +1,23 @@
 require('dotenv').config();
+
+// Validate required environment variables at boot
+const requiredEnvs = ['SHOPIFY_API_KEY', 'SHOPIFY_API_SECRET', 'SHOPIFY_ACCESS_TOKEN', 'SHOP_URL', 'OPENAI_API_KEY', 'HOST'];
+const missingEnvs = [];
+for (const env of requiredEnvs) {
+  if (!process.env[env]) {
+    missingEnvs.push(env);
+  }
+}
+if (missingEnvs.length > 0) {
+  console.error('\n❌ FATAL CONFIGURATION ERROR: Missing required environment variables:');
+  missingEnvs.forEach(env => console.error(`   - ${env}`));
+  console.error('\n💡 Troubleshooting tips for Coolify / Render:');
+  console.error('   1. Ensure these are defined in the "Environment Variables" tab of your service.');
+  console.error('   2. Verify that they are enabled for RUNTIME (and not just Build time).');
+  console.error('   3. Re-deploy the service with "Force Rebuild" or "Clear cache" to apply the changes.\n');
+  process.exit(1);
+}
+
 const express = require('express');
 const { shopifyApi, ApiVersion, LogSeverity, Session } = require('@shopify/shopify-api');
 const { OpenAI } = require('openai');

@@ -334,17 +334,29 @@ app.get('/api/status', (req, res) => {
 // GET /api/products: Fetch products with search and pagination support
 app.get('/api/products', async (req, res) => {
   try {
-    const first = parseInt(req.query.first) || 100;
-    const after = req.query.after || null;
+    let hasNextPage = true;
+    let endCursor = req.query.after || null;
     const query = req.query.search ? `title:*${req.query.search}*` : null;
-
-    const response = await requestWithRetry(client, LIST_PRODUCTS_QUERY, { first, after, query });
-    const productsData = response.data.products;
+    
+    let allEdges = [];
+    let loops = 0;
+    const maxLoops = 10; // Fetch up to 2500 products (10 * 250)
+    
+    while (hasNextPage && loops < maxLoops) {
+      const response = await requestWithRetry(client, LIST_PRODUCTS_QUERY, { first: 250, after: endCursor, query });
+      const productsData = response.data.products;
+      
+      allEdges = allEdges.concat(productsData.edges);
+      
+      hasNextPage = productsData.pageInfo.hasNextPage;
+      endCursor = productsData.pageInfo.endCursor;
+      loops++;
+    }
     
     const reviewedIds = await getReviewedProductIds();
 
     // Format response payload
-    const productsList = productsData.edges.map(edge => {
+    const productsList = allEdges.map(edge => {
       const id = edge.node.id;
       const isReviewed = reviewedIds.includes(id);
       return {
@@ -358,7 +370,7 @@ app.get('/api/products', async (req, res) => {
 
     res.json({
       products: productsList,
-      pageInfo: productsData.pageInfo
+      pageInfo: { hasNextPage, endCursor }
     });
   } catch (error) {
     console.error('Error fetching products list:', error.message);

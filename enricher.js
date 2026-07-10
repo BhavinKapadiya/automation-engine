@@ -155,7 +155,7 @@ function slugify(text) {
 
 // Helper: Build HTML specifications table
 function buildSpecsTableHtml(specifications, title) {
-  let html = `<h3>Specifications – ${title}</h3>\n`;
+  let html = `<h3>Specifications</h3>\n`;
   html += `<table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; font-size: 14px; text-align: left; font-family: sans-serif;">\n`;
   html += `  <thead>\n`;
   html += `    <tr style="background-color: #f2f2f2; border-bottom: 2px solid #ddd;">\n`;
@@ -206,9 +206,9 @@ function compileDescriptionHtml(aiData, specsTableHtml, originalDescriptionHtml)
     html += youtubeVideos;
   }
   
-  // 1. Description
+  // 1. Short Intro
   if (aiData.description_sections.short_intro) {
-    html += `<h3>Description</h3>\n<p>${aiData.description_sections.short_intro}</p>\n\n`;
+    html += `<h3>Short Intro</h3>\n<p>${aiData.description_sections.short_intro}</p>\n\n`;
   }
   
   // 2. Specifications Table (inserted right after the Description)
@@ -305,8 +305,10 @@ CRITICAL - NO HALLUCINATIONS:
    - "key_features": Array of 3 to 6 technical highlights (e.g., pre-tapped captured nuts, snorkel cutout details, EDP rust protection).
    - "compatibility": Clearly explain vehicle fitment, including year ranges, body types (Troopy, Ute, FRP Top, Wagon), chassis codes, and engine variants if applicable.
    - "installation_notes": Explicitly detail what components are NOT included and must be transferred from the original part (e.g., glass, window seals, regulator assembly, lock cylinders, wiper motor), and recommend professional prep and painting.
-   - "seo_title": Generate a high-performance SEO Page Title. It must be strictly 70 characters or less (preferably between 50 and 65 characters) and contain the product name, key vehicle compatibilities, and brand 'Track Auto'. DO NOT exceed 70 characters.
-   - "seo_meta_description": Generate a highly optimized search engine meta description. It must be strictly 160 characters or less (preferably between 120 and 150 characters) summarizing what the product is, its key fitment, and a call-to-action or selling point. DO NOT exceed 160 characters.
+
+8. "seo_title": Generate a high-performance SEO Page Title. It must be strictly 70 characters or less (preferably between 50 and 65 characters) and contain the product name, key vehicle compatibilities, and brand 'Track Auto'. DO NOT exceed 70 characters.
+
+9. "seo_meta_description": Generate a highly optimized search engine meta description. It must be strictly 160 characters or less (preferably between 120 and 150 characters) summarizing what the product is, its key fitment, and a call-to-action or selling point. DO NOT exceed 160 characters.
 
 Return the response EXCLUSIVELY as a raw JSON object with these exact keys:
 {

@@ -54,6 +54,13 @@ async function initDb() {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
       `);
+      await dbPool.query(`
+        CREATE TABLE IF NOT EXISTS ai_drafts (
+          product_id VARCHAR(255) PRIMARY KEY,
+          draft_data LONGTEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `);
       useMysql = true;
       console.log('✅ MySQL Database initialized successfully.');
     } catch (e) {
@@ -98,6 +105,59 @@ async function markProductAsReviewed(productId) {
       timestamp: new Date().toISOString()
     };
     writeStatusTracker(statusTracker);
+  }
+}
+
+const DRAFTS_FILE = path.join(__dirname, 'ai_drafts.json');
+
+function readDrafts() {
+  if (!fs.existsSync(DRAFTS_FILE)) return {};
+  try { return JSON.parse(fs.readFileSync(DRAFTS_FILE, 'utf8')); }
+  catch (e) { return {}; }
+}
+function writeDrafts(data) {
+  try { fs.writeFileSync(DRAFTS_FILE, JSON.stringify(data, null, 2)); }
+  catch (e) { console.error('Error writing drafts:', e.message); }
+}
+
+async function getDraft(productId) {
+  if (useMysql && dbPool) {
+    try {
+      const [rows] = await dbPool.query('SELECT draft_data FROM ai_drafts WHERE product_id = ?', [productId]);
+      if (rows.length > 0) return JSON.parse(rows[0].draft_data);
+    } catch (err) { console.error('Error getting draft from MySQL:', err.message); }
+  } else {
+    const drafts = readDrafts();
+    return drafts[productId] || null;
+  }
+  return null;
+}
+
+async function saveDraft(productId, data) {
+  if (useMysql && dbPool) {
+    try {
+      await dbPool.query(
+        'INSERT INTO ai_drafts (product_id, draft_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE draft_data = ?',
+        [productId, JSON.stringify(data), JSON.stringify(data)]
+      );
+      console.log(`💾 Product draft ${productId} saved to MySQL.`);
+    } catch (err) { console.error('Error saving draft to MySQL:', err.message); }
+  } else {
+    const drafts = readDrafts();
+    drafts[productId] = data;
+    writeDrafts(drafts);
+  }
+}
+
+async function deleteDraft(productId) {
+  if (useMysql && dbPool) {
+    try {
+      await dbPool.query('DELETE FROM ai_drafts WHERE product_id = ?', [productId]);
+    } catch (err) { console.error('Error deleting draft from MySQL:', err.message); }
+  } else {
+    const drafts = readDrafts();
+    delete drafts[productId];
+    writeDrafts(drafts);
   }
 }
 
@@ -336,6 +396,18 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
+// GET /api/products/:id/draft: Fetch existing AI generated draft if any
+app.get('/api/products/:id/draft', async (req, res) => {
+  try {
+    const productId = `gid://shopify/Product/${req.params.id}`;
+    const draft = await getDraft(productId);
+    res.json({ draft });
+  } catch (error) {
+    console.error('Error fetching draft:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/products/:id/generate: Call AI model to generate preview text
 app.post('/api/products/:id/generate', async (req, res) => {
   try {
@@ -356,13 +428,17 @@ app.post('/api/products/:id/generate', async (req, res) => {
     const specsTableHtml = buildSpecsTableHtml(aiData.specifications, product.title);
     const compiledDescriptionHtml = compileDescriptionHtml(aiData, specsTableHtml, product.descriptionHtml);
     
-    res.json({
+    const payload = {
       id: product.id,
       aiData: aiData,
       compiledDescriptionHtml: compiledDescriptionHtml,
       seoTitle: aiData.seo_title || '',
       seoMetaDescription: aiData.seo_meta_description || ''
-    });
+    };
+    
+    await saveDraft(product.id, payload);
+    
+    res.json(payload);
   } catch (error) {
     console.error('Error generating AI preview:', error.message);
     res.status(500).json({ error: error.message });
@@ -443,6 +519,9 @@ app.post('/api/products/:id/publish', async (req, res) => {
     
     // 3. Mark status as Reviewed
     await markProductAsReviewed(productId);
+    
+    // 4. Delete the AI draft
+    await deleteDraft(productId);
     
     res.json({ success: true });
   } catch (error) {

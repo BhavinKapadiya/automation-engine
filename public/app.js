@@ -183,6 +183,13 @@ async function selectProduct(shopifyId) {
     // Reset Counters
     updateCounters();
     
+    // Check if there is an existing draft
+    const draftRes = await fetch(`/api/products/${id}/draft`);
+    const draftData = await draftRes.json();
+    if (draftData.draft) {
+      populateAiData(draftData.draft);
+    }
+    
   } catch (err) {
     console.error('Error loading product details:', err);
     alert('Failed to load product details.');
@@ -218,6 +225,18 @@ async function generateAiCopy() {
     }
     
     lastAiResponse = data; // Cache spec sheets and metafield output JSON
+    populateAiData(data);
+    
+  } catch (err) {
+    console.error('Error generating AI copy:', err);
+    alert('AI call failed.');
+  } finally {
+    hideLoader();
+  }
+}
+
+function populateAiData(data) {
+    lastAiResponse = data;
     
     // Populate form fields
     editDescriptionHtml.innerHTML = data.compiledDescriptionHtml;
@@ -255,13 +274,6 @@ async function generateAiCopy() {
     
     // Update live counters
     updateCounters();
-    
-  } catch (err) {
-    console.error('Error generating AI copy:', err);
-    alert('AI call failed.');
-  } finally {
-    hideLoader();
-  }
 }
 
 // Publish modifications to Shopify

@@ -1,9 +1,10 @@
-// Application State
 let products = [];
 let statuses = {};
 let selectedProduct = null;
 let currentFilter = 'all';
 let searchTimeout = null;
+let currentCursor = null;
+let hasNextPage = false;
 
 // Temporary AI payload storage (for specs)
 let lastAiResponse = null;
@@ -17,6 +18,7 @@ const filterAll = document.getElementById('filter-all');
 const filterPending = document.getElementById('filter-pending');
 const filterReviewed = document.getElementById('filter-reviewed');
 const productListContainer = document.getElementById('product-list-container');
+const btnLoadMore = document.getElementById('btn-load-more');
 
 const noSelectionView = document.getElementById('no-selection-view');
 const editorView = document.getElementById('editor-view');
@@ -59,7 +61,7 @@ const btnDiscard = document.getElementById('btn-discard');
 // Initialize App
 async function init() {
   // Initialize SunEditor
-  sunEditorInstance = SUNEDITOR.create('edit-description-html', {
+  sunEditorInstance = SUNEDITOR.create(document.getElementById('edit-description-html'), {
     buttonList: [
         ['undo', 'redo'],
         ['font', 'fontSize', 'formatBlock'],
@@ -93,12 +95,33 @@ async function fetchStatusTracker() {
 }
 
 // Fetch Products List
-async function fetchProducts(search = '') {
+async function fetchProducts(search = '', append = false) {
   try {
-    const url = `/api/products?first=250&search=${encodeURIComponent(search)}`;
+    const url = `/api/products?first=10&search=${encodeURIComponent(search)}${append && currentCursor ? '&after=' + currentCursor : ''}`;
     const res = await fetch(url);
     const data = await res.json();
-    products = data.products || [];
+    
+    if (append) {
+      products = products.concat(data.products || []);
+    } else {
+      products = data.products || [];
+    }
+    
+    hasNextPage = data.pageInfo.hasNextPage;
+    currentCursor = data.pageInfo.endCursor;
+    
+    if (hasNextPage) {
+      btnLoadMore.style.display = 'block';
+    } else {
+      btnLoadMore.style.display = 'none';
+    }
+    
+    if (data.counts && !append) {
+      filterAll.textContent = `All (${data.counts.all})`;
+      filterPending.textContent = `Pending (${data.counts.pending})`;
+      filterReviewed.textContent = `Reviewed (${data.counts.reviewed})`;
+    }
+    
     renderProductList();
   } catch (err) {
     console.error('Error loading products:', err);
@@ -116,18 +139,6 @@ function renderProductList() {
     if (currentFilter === 'reviewed') return isReviewed;
     return true; // all
   });
-
-  // Update tab counts
-  let pendingCount = 0;
-  let reviewedCount = 0;
-  products.forEach(p => {
-    const isReviewed = p.isReviewed || (statuses[p.id] && statuses[p.id].status === 'Reviewed');
-    if (isReviewed) reviewedCount++;
-    else pendingCount++;
-  });
-  filterAll.textContent = `All (${products.length})`;
-  filterPending.textContent = `Pending (${pendingCount})`;
-  filterReviewed.textContent = `Reviewed (${reviewedCount})`;
 
   if (filtered.length === 0) {
     productListContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No products found.</div>';
@@ -376,8 +387,13 @@ function setupEventListeners() {
   searchInput.addEventListener('keyup', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-      fetchProducts(e.target.value.trim());
+      fetchProducts(e.target.value.trim(), false);
     }, 400);
+  });
+  
+  // Load More logic
+  btnLoadMore.addEventListener('click', () => {
+    fetchProducts(searchInput.value.trim(), true);
   });
   
   // Filters switching

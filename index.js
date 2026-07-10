@@ -271,6 +271,14 @@ const LIST_PRODUCTS_QUERY = `
   }
 `;
 
+const COUNT_PRODUCTS_QUERY = `
+  query countProducts($query: String) {
+    productsCount(query: $query) {
+      count
+    }
+  }
+`;
+
 const GET_PRODUCT_DETAILS_QUERY = `
   query getProductDetails($id: ID!) {
     product(id: $id) {
@@ -334,29 +342,18 @@ app.get('/api/status', (req, res) => {
 // GET /api/products: Fetch products with search and pagination support
 app.get('/api/products', async (req, res) => {
   try {
-    let hasNextPage = true;
-    let endCursor = req.query.after || null;
+    const first = parseInt(req.query.first) || 10;
+    const endCursor = req.query.after || null;
     const query = req.query.search ? `title:*${req.query.search}*` : null;
     
-    let allEdges = [];
-    let loops = 0;
-    const maxLoops = 10; // Fetch up to 2500 products (10 * 250)
-    
-    while (hasNextPage && loops < maxLoops) {
-      const response = await requestWithRetry(client, LIST_PRODUCTS_QUERY, { first: 250, after: endCursor, query });
-      const productsData = response.data.products;
-      
-      allEdges = allEdges.concat(productsData.edges);
-      
-      hasNextPage = productsData.pageInfo.hasNextPage;
-      endCursor = productsData.pageInfo.endCursor;
-      loops++;
-    }
+    // Fetch limited products (e.g. 10)
+    const response = await requestWithRetry(client, LIST_PRODUCTS_QUERY, { first, after: endCursor, query });
+    const productsData = response.data.products;
     
     const reviewedIds = await getReviewedProductIds();
 
     // Format response payload
-    const productsList = allEdges.map(edge => {
+    const productsList = productsData.edges.map(edge => {
       const id = edge.node.id;
       const isReviewed = reviewedIds.includes(id);
       return {
@@ -367,10 +364,32 @@ app.get('/api/products', async (req, res) => {
         isReviewed: isReviewed
       };
     });
+    
+    let counts = { all: 0, pending: 0, reviewed: 0 };
+    
+    // Fetch total count from Shopify
+    try {
+      const countResponse = await requestWithRetry(client, COUNT_PRODUCTS_QUERY, { query });
+      counts.all = countResponse.data.productsCount ? countResponse.data.productsCount.count : 0;
+    } catch (e) {
+      console.log("Count query failed", e.message);
+      counts.all = productsList.length; // fallback
+    }
+    
+    // Calculate pending/reviewed accurately if no search, otherwise locally for subset
+    if (!query) {
+      counts.reviewed = reviewedIds.length;
+      counts.pending = Math.max(0, counts.all - counts.reviewed);
+    } else {
+      counts.reviewed = productsList.filter(p => p.isReviewed).length;
+      counts.pending = productsList.length - counts.reviewed;
+      counts.all = productsList.length; 
+    }
 
     res.json({
       products: productsList,
-      pageInfo: { hasNextPage, endCursor }
+      pageInfo: productsData.pageInfo,
+      counts: counts
     });
   } catch (error) {
     console.error('Error fetching products list:', error.message);

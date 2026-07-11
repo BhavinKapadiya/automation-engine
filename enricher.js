@@ -270,11 +270,13 @@ CRITICAL - NO HALLUCINATIONS:
 - If a detail is missing (such as weight, dimensions, color, or exact material composition), omit it entirely from the output JSON. Do not guess.
 - Do not claim a part has features or fitment capabilities that are not explicitly mentioned in the source details.
 
-1. "clean_title": Rewrite the title to be clean, short, customer-friendly, and optimized for SEO.
-   - For aftermarket parts, use the structure: "Aftermarket [Part Name] Suitable for [Series / Model]".
-   - CRITICAL: Omit manufacturer branding (like "Toyota LandCruiser" or "Nissan Patrol") from the clean title if it is aftermarket. Use only the series or clean model name.
-   - Example: Instead of "Aftermarket Left Hand Rear Door for Toyota LandCruiser 60 Series", use "Aftermarket LH Rear Door Suitable for 60 Series".
-   - Example: Instead of "Aftermarket DPF Bonnet for Toyota LandCruiser 79 Series V8", use "Aftermarket DPF Bonnet Suitable for 79 Series".
+1. "clean_title": Rewrite the title to be clean, short, customer-friendly, and optimized for SEO ONLY if necessary. If the original title is already good, keep it exactly as is.
+   - When rewriting, use short abbreviations like "LH" and "RH" instead of "Left Hand" or "Right Hand".
+   - CRITICAL: NEVER use the words "Suitable for". Just use "for" (e.g., "for [Series / Model]").
+   - For aftermarket parts, use the structure: "Aftermarket [Part Name] for [Series / Model]".
+   - Omit manufacturer branding (like "Toyota" or "Nissan") from the clean title if it is aftermarket. Use only the model/series name.
+   - Example: Original "Aftermarket Left Hand Rear Door for Toyota LandCruiser 60 Series" -> AI Suggested "Aftermarket LH Rear Door for LandCruiser 60 Series"
+   - Example: Original "Dual Cab Tub Suitable for Landcruiser" -> AI Suggested "Dual Cab Tub for LandCruiser"
 
 2. "product_type": Categorize the product into a specific standard customer-facing type / category.
    - Use clean, user-friendly, pluralized category names.

@@ -424,13 +424,18 @@ async function enrichProduct(client, openai, productId, dryRun = true) {
   };
   fs.appendFileSync('backups.jsonl', JSON.stringify(backupData) + '\n');
   
-  // 1. Update Title, Description, and Native Product Type
+  // 1. Update Title, Description, Native Product Type, SEO tags, and force status to DRAFT
   const updateRes = await requestWithRetry(client, UPDATE_PRODUCT_MUTATION, {
     input: {
       id: product.id,
       title: aiData.clean_title,
       descriptionHtml: newDescriptionHtml,
-      productType: aiData.product_type
+      productType: aiData.product_type,
+      status: "DRAFT",
+      seo: {
+        title: aiData.seo_title,
+        description: aiData.seo_meta_description
+      }
     }
   });
   

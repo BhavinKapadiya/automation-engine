@@ -305,14 +305,21 @@ CRITICAL - NO HALLUCINATIONS:
 6. "faqs": Generate exactly 3 product-specific Frequently Asked Questions (FAQs) and answers. These must address actual technical restoration, fitment, or installation concerns specific to this item (e.g. transfer of factory latches, safety catch inclusion, gas strut compatibility, hinge alignment, reuse of glass/seals, or wiring modifications). CRITICAL: Never generate basic repetition questions like "What is it made of?" or "Is it rust resistant?". Every FAQ must provide unique technical value. Do not repeat facts from the key features list.
 
 7. "description_sections": Generate the text sections for the description:
-   - "short_intro": Write an engaging, conversational opening paragraph that speaks directly to the customer. Instead of just listing dry facts, explain the real-world problem this part solves and why this particular product is the right solution.
-     * Write in the voice of an experienced Australian 4WD parts specialist who is talking to a fellow enthusiast.
-     * Reference the actual real-world scenario — e.g. rust damage, worn-out originals, faded plastic, cracked seals, failed components — that would cause someone to need this part.
-     * Then explain how this specific product addresses that problem — e.g. its build quality, material, fitment accuracy, or durability advantage.
-     * CRITICAL: Do NOT make assumptions or guess details not provided in the product data. Only reference problems and solutions that logically relate to the product type and the information given.
-     * CRITICAL: Never use marketing clichés like "Upgrade your ride", "Take your vehicle to the next level", "seeking enhanced durability", or "Whether you're looking for...". Write naturally, as if explaining the part to a customer face-to-face in a workshop.
-     * Good example: "If you've ever tried to close a 40-year-old door on a 60 Series, you know the drill — sagging hinges, rusted skins, and a door that rattles more than it seals. This aftermarket replacement door is pressed from heavy-gauge steel and comes ready for prep and paint, giving you a solid foundation to restore that factory-tight fit."
-     * Bad example: "This is an aftermarket door made from steel. It is designed for the 60 Series Toyota LandCruiser."
+   - "short_intro": The writing style of this paragraph MUST change based on the product type:
+
+     ** FOR VEHICLE-SPECIFIC BODY/MECHANICAL PARTS (doors, bonnets, guards, panels, tubs, grilles, glass, suspension, pillars, seals, cabin parts, etc.):
+     Write an engaging, conversational opening paragraph that speaks directly to the customer about the real-world problem this part solves.
+      * Write in the voice of an experienced Australian 4WD parts specialist talking to a fellow enthusiast.
+      * Reference the actual real-world scenario — e.g. rust damage, worn-out originals, faded plastic, cracked seals, failed components — that would cause someone to need this part.
+      * Then explain how this specific product addresses that problem — e.g. its build quality, material, fitment accuracy, or durability advantage.
+      * CRITICAL: Do NOT make assumptions or guess details not provided in the product data. Only reference problems and solutions that logically relate to the product type and the information given.
+      * CRITICAL: Never use marketing clichés like "Upgrade your ride", "Take your vehicle to the next level", "seeking enhanced durability", or "Whether you're looking for...". Write naturally, as if explaining the part face-to-face in a workshop.
+      * Good example: "If you've ever tried to close a 40-year-old door on a 60 Series, you know the drill — sagging hinges, rusted skins, and a door that rattles more than it seals. This aftermarket replacement door is pressed from heavy-gauge steel and comes ready for prep and paint, giving you a solid foundation to restore that factory-tight fit."
+
+     ** FOR GENERIC/UNIVERSAL ACCESSORIES (tow balls, tow ball mounts, UHF radios, antennas, fridges, freezers, cooler bags, fridge slides, recovery gear, winches, shackles, camping chairs, generators, floor mats, throttle controllers, LED work lights, etc.):
+     Write a clean, concise, factual paragraph. Simply describe what the product is, what it does, and its key selling point. Do NOT invent a backstory or a "problem" scenario — these products do not have worn-out originals to replace.
+      * Good example: "The ENGEL 40L Portable Fridge-Freezer delivers reliable cooling performance for overlanding, camping, and long-distance touring. Powered by the legendary Sawafuji swing motor, it runs quietly and efficiently on 12V or 240V."
+      * Bad example: "If you've ever been stuck in the outback with warm drinks, you know the frustration..."
    - "key_features": Array of 3 to 6 technical highlights (e.g., pre-tapped captured nuts, snorkel cutout details, EDP rust protection).
    - "compatibility": Clearly explain vehicle fitment, including year ranges, body types (Troopy, Ute, FRP Top, Wagon), chassis codes, and engine variants if applicable.
    - "installation_notes": Explicitly detail what components are NOT included and must be transferred from the original part (e.g., glass, window seals, regulator assembly, lock cylinders, wiper motor), and recommend professional prep and painting. CRITICAL: If the product is a universal or simple accessory (e.g. tow balls, tow ball mounts, tyre deflators, winch accessories, recovery gear, UHF radios/antennas, portable fridges/freezers, folding chairs, generators, floor mats), you MUST set "installation_notes" to an empty string (""). Do not invent fitment instructions or paint recommendations for these items.

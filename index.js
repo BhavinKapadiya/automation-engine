@@ -335,7 +335,22 @@ const SET_METAFIELDS_MUTATION = `
 `;
 
 // GET /api/status: Fetch all product statuses
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+  if (useMysql && dbPool) {
+    try {
+      const [rows] = await dbPool.query('SELECT product_id, status FROM reviewed_products');
+      const statuses = {};
+      rows.forEach(r => {
+        statuses[r.product_id] = {
+          status: r.status
+        };
+      });
+      return res.json(statuses);
+    } catch (err) {
+      console.error('Error fetching status tracker from MySQL:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
   res.json(readStatusTracker());
 });
 

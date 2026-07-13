@@ -272,12 +272,13 @@ CRITICAL - NO HALLUCINATIONS:
 - If a detail is missing (such as weight, dimensions, color, or exact material composition), omit it entirely from the output JSON. Do not guess.
 - Do not claim a part has features or fitment capabilities that are not explicitly mentioned in the source details.
 
-1. "clean_title": Rewrite the title to be clean, short, customer-friendly, and optimized for SEO ONLY if necessary. If the original title is already good, keep it exactly as is.
-   - CRITICAL: Do NOT use abbreviations like "LH" or "RH". Always use the full words "Left Hand" and "Right Hand".
-   - CRITICAL: NEVER use the words "Suitable for" or "to Suit". Just use "for" (e.g., "for [Series / Model]").
-   - For aftermarket parts, use the structure: "Aftermarket [Part Name] for [Series / Model]".
-   - ALWAYS keep the manufacturer branding (like "Toyota" and "LandCruiser") in the title if it exists. Do not drop it.
-   - Example: Original "Aftermarket LH Rear Door for Toyota LandCruiser 60 Series" -> AI Suggested "Aftermarket Left Hand Rear Door for Toyota LandCruiser 60 Series"
+1. "clean_title": Clean the product title using these strict rules. Keep the original title exactly as is unless it violates one of the following rules:
+   - CRITICAL: Do NOT drop or delete any technical specifications (e.g., "3dbi/6.5dbi", "50mm", "3.5 tonne"), part numbers (e.g., "ANU806AT"), or model details. Keep them exactly as they are in the original title.
+   - CRITICAL: Do NOT use abbreviations like "LH" or "RH". Always expand them to the full words "Left Hand" and "Right Hand". If the original title has "LH" or "RH", rewrite it to "Left Hand" or "Right Hand".
+   - CRITICAL: NEVER use the words "Suitable for", "to Suit", or "suits". Always replace them with the word "for" (e.g., "for [Series / Model]").
+   - ALWAYS keep the manufacturer branding (like "Toyota", "LandCruiser", "Oricom", "TAG", "ENGEL") in the title if it exists. Do not drop it.
+   - Example: Original "Oricom 2-in-1 All-Terrain UHF CB Antenna for low/high gain (3dbi/6.5dbi) ANU806AT" -> AI Suggested "Oricom 2-in-1 All-Terrain UHF CB Antenna for low/high gain (3dbi/6.5dbi) ANU806AT" (no changes, since it has no "suitable for" or "LH/RH")
+   - Example: Original "Aftermarket LH Rear Door to Suit Toyota LandCruiser 60 Series" -> AI Suggested "Aftermarket Left Hand Rear Door for Toyota LandCruiser 60 Series"
    - Example: Original "Dual Cab Tub Suitable for Toyota Landcruiser" -> AI Suggested "Dual Cab Tub for Toyota Landcruiser"
 
 2. "product_type": Categorize the product into a specific standard customer-facing type / category.

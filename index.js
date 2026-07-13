@@ -480,13 +480,14 @@ app.post('/api/products/:id/generate', async (req, res) => {
 app.post('/api/products/:id/publish', async (req, res) => {
   try {
     const productId = `gid://shopify/Product/${req.params.id}`;
-    const { descriptionHtml, seoTitle, seoMetaDescription, productType, specifications, coreMetafields } = req.body;
+    const { title, descriptionHtml, seoTitle, seoMetaDescription, productType, specifications, coreMetafields } = req.body;
     
     console.log(`🔄 Publishing modifications for product ID: ${productId}...`);
     
-    // 1. Update main description and product type (Do NOT touch the title)
+    // 1. Update title, description, and product type
     const updateInput = {
       id: productId,
+      title: title,
       descriptionHtml: descriptionHtml,
       productType: productType,
       seo: {

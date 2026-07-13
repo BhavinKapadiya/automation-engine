@@ -85,6 +85,13 @@
             </div>
             <div class="column-content">
               <div class="card">
+                <div class="card-title">Original Title</div>
+                <div class="preview-html" id="original-title-preview" style="font-weight: bold; font-size: 15px;">
+                  -
+                </div>
+              </div>
+
+              <div class="card">
                 <div class="card-title">Original Description</div>
                 <div class="preview-html" id="original-desc-preview">
                   <!-- Original Shopify HTML Description goes here -->
@@ -112,6 +119,14 @@
               <span class="badge" id="ai-generation-badge" style="display: none; background: var(--primary-light); color: var(--primary);">SUGGESTION LOADED</span>
             </div>
             <div class="column-content">
+
+              <!-- Proposed Title Editor -->
+              <div class="card">
+                <div class="card-title">Proposed Title</div>
+                <div class="form-group">
+                  <input type="text" id="edit-product-title" class="form-input" placeholder="Generate AI to suggest product title" style="font-weight: bold; font-size: 15px;">
+                </div>
+              </div>
               
               <!-- Tab 1: Description Editor -->
               <div class="card">

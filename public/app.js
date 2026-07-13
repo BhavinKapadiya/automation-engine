@@ -29,11 +29,13 @@ const pSku = document.getElementById('p-sku');
 const pVendor = document.getElementById('p-vendor');
 
 // Column Left: Original Copy Previews
+const originalTitlePreview = document.getElementById('original-title-preview');
 const originalDescPreview = document.getElementById('original-desc-preview');
 const originalSeoTitle = document.getElementById('original-seo-title');
 const originalSeoDesc = document.getElementById('original-seo-desc');
 
 // Column Right: Form Fields & Editors
+const editProductTitle = document.getElementById('edit-product-title');
 const editDescriptionHtml = document.getElementById('edit-description-html');
 const editSeoTitle = document.getElementById('edit-seo-title');
 const editSeoDesc = document.getElementById('edit-seo-desc');
@@ -187,11 +189,13 @@ async function selectProduct(shopifyId) {
     pVendor.textContent = selectedProduct.vendor || 'N/A';
     
     // Populate Left column (Original Details)
+    originalTitlePreview.textContent = selectedProduct.title;
     originalDescPreview.innerHTML = selectedProduct.descriptionHtml || '<p style="font-style: italic; color: var(--text-muted);">No description set.</p>';
     originalSeoTitle.textContent = selectedProduct.seo.title || 'Using default product title';
     originalSeoDesc.textContent = selectedProduct.seo.description || 'Using default product meta description';
     
     // Clear Right column inputs (Editor fields)
+    editProductTitle.value = '';
     if (tinymce.get('edit-description-html')) {
       tinymce.get('edit-description-html').setContent('');
     }
@@ -263,6 +267,7 @@ function populateAiData(data) {
     lastAiResponse = data;
     
     // Populate form fields
+    editProductTitle.value = data.aiData ? (data.aiData.clean_title || selectedProduct.title) : (data.clean_title || selectedProduct.title);
     if (tinymce.get('edit-description-html')) {
       tinymce.get('edit-description-html').setContent(data.compiledDescriptionHtml);
     }
@@ -307,10 +312,16 @@ async function publishToShopify() {
   if (!selectedProduct) return;
   const id = selectedProduct.id.replace('gid://shopify/Product/', '');
   
+  const title = editProductTitle.value.trim();
   const descriptionHtml = tinymce.get('edit-description-html') ? tinymce.get('edit-description-html').getContent().trim() : '';
   const seoTitle = editSeoTitle.value.trim();
   const seoMetaDescription = editSeoDesc.value.trim();
   const productType = editProductType.value.trim();
+  
+  if (!title) {
+    alert('Please enter a product title.');
+    return;
+  }
   
   if (!descriptionHtml) {
     alert('Please fill out the Description HTML field or generate suggestions first.');
@@ -342,6 +353,7 @@ async function publishToShopify() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        title,
         descriptionHtml,
         seoTitle,
         seoMetaDescription,

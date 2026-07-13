@@ -606,6 +606,32 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
+app.get('/api/debug-webhooks', async (req, res) => {
+  try {
+    const response = await client.request(`
+      query {
+        webhookSubscriptions(first: 50) {
+          edges {
+            node {
+              id
+              topic
+              endpoint {
+                __typename
+                ... on WebhookHttpEndpoint {
+                  callbackUrl
+                }
+              }
+            }
+          }
+        }
+      }
+    `);
+    res.json(response.data.webhookSubscriptions.edges);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

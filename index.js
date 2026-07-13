@@ -606,69 +606,6 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
-app.get('/api/debug-webhooks', async (req, res) => {
-  try {
-    const response = await client.request(`
-      query {
-        webhookSubscriptions(first: 50) {
-          edges {
-            node {
-              id
-              topic
-              endpoint {
-                __typename
-                ... on WebhookHttpEndpoint {
-                  callbackUrl
-                }
-              }
-            }
-          }
-        }
-      }
-    `);
-    res.json(response.data.webhookSubscriptions.edges);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/debug-register-webhook', async (req, res) => {
-  try {
-    const mutation = `
-      mutation webhookSubscriptionCreate($topic: WebhookSubscriptionTopic!, $webhookSubscription: WebhookSubscriptionInput!) {
-        webhookSubscriptionCreate(topic: $topic, webhookSubscription: $webhookSubscription) {
-          userErrors {
-            field
-            message
-          }
-          webhookSubscription {
-            id
-            topic
-            endpoint {
-              __typename
-              ... on WebhookHttpEndpoint {
-                callbackUrl
-              }
-            }
-          }
-        }
-      }
-    `;
-    const response = await client.request(mutation, {
-      variables: {
-        topic: "PRODUCTS_CREATE",
-        webhookSubscription: {
-          callbackUrl: "https://truckauto.project.terzettoo.com/webhooks/products-create",
-          format: "JSON"
-        }
-      }
-    });
-    res.json(response.data.webhookSubscriptionCreate);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

@@ -606,6 +606,42 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
+app.get('/api/debug-get-menu', async (req, res) => {
+  try {
+    const query = `
+      query {
+        menu(id: "gid://shopify/Menu/311189995811") {
+          id
+          title
+          handle
+          items {
+            id
+            title
+            url
+            type
+            items {
+              id
+              title
+              url
+              type
+              items {
+                id
+                title
+                url
+                type
+              }
+            }
+          }
+        }
+      }
+    `;
+    const response = await client.request(query);
+    res.json(response.data.menu);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

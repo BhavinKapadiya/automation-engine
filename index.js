@@ -606,6 +606,105 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
+app.post('/api/debug-setup-12v-accessories', async (req, res) => {
+  try {
+    const productsData = [
+      { id: "gid://shopify/Product/10120388837667", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10223456780579", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10223456616739", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10223484928291", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10223485583651", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10223443706147", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10207090704675", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10236166897955", type: "12V Accessories", dept: "Power & 12V" },
+      { id: "gid://shopify/Product/10236187410723", type: "12V Accessories", dept: "Power & 12V" }
+    ];
+
+    const productUpdateMutation = `
+      mutation productUpdate($input: ProductInput!) {
+        productUpdate(input: $input) {
+          product { id }
+          userErrors { message }
+        }
+      }
+    `;
+
+    const metafieldsSetMutation = `
+      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields { key }
+          userErrors { message }
+        }
+      }
+    `;
+
+    let updatedCount = 0;
+
+    // 1. Update product types and departments
+    for (const item of productsData) {
+      try {
+        await client.request(productUpdateMutation, {
+          variables: { input: { id: item.id, productType: item.type } }
+        });
+
+        await client.request(metafieldsSetMutation, {
+          variables: {
+            metafields: [{
+              ownerId: item.id,
+              namespace: "custom",
+              key: "product_department",
+              value: item.dept,
+              type: "single_line_text_field"
+            }]
+          }
+        });
+        updatedCount++;
+      } catch (err) {
+        console.error(`Error updating product ${item.id}:`, err.message);
+      }
+      await new Promise(resolve => setTimeout(resolve, 80));
+    }
+
+    // 2. Create the 12V Accessories Smart Collection
+    const restClient = new shopify.clients.Rest({ session });
+    let createdTitle = "";
+
+    try {
+      const colRes = await restClient.post({
+        path: 'smart_collections',
+        data: {
+          smart_collection: {
+            title: "12V Accessories",
+            rules: [
+              { column: "type", relation: "equals", condition: "12V Accessories" },
+              { column: "type", relation: "equals", condition: "12V Lighting" },
+              { column: "type", relation: "equals", condition: "Headlights" },
+              { column: "type", relation: "equals", condition: "Tail Lights" },
+              { column: "type", relation: "equals", condition: "Work Lights" },
+              { column: "type", relation: "equals", condition: "UHF Radios" },
+              { column: "type", relation: "equals", condition: "Throttle Controllers" },
+              { column: "type", relation: "equals", condition: "Solar & Power" },
+              { column: "type", relation: "equals", condition: "Air Compressors" }
+            ],
+            disjunctive: true // Match ANY condition
+          }
+        }
+      });
+      createdTitle = colRes.body.smart_collection.title;
+    } catch (err) {
+      console.error("Error creating 12V Accessories collection:", err.message);
+    }
+
+    res.json({
+      success: true,
+      updatedProducts: updatedCount,
+      createdCollection: createdTitle
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

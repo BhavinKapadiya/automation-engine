@@ -606,6 +606,50 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
+app.get('/api/debug-list-all-collections', async (req, res) => {
+  try {
+    const query = `
+      query {
+        collections(first: 250) {
+          edges {
+            node {
+              id
+              title
+              handle
+              productsCount {
+                count
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await client.request(query);
+    const collections = response.data.collections.edges.map(e => e.node);
+
+    // Sort alphabetically by title
+    collections.sort((a, b) => a.title.localeCompare(b.title));
+
+    const path = require('path');
+    const fs = require('fs');
+    const outputFilePath = path.join(__dirname, 'all_collections_list.txt');
+
+    let fileContent = `=== ALL STORE COLLECTIONS (${collections.length}) ===\n\n`;
+    fileContent += collections.map((c, index) => `${index + 1}. ${c.title} (Handle: ${c.handle}, Products: ${c.productsCount.count}, GID: ${c.id})`).join('\n') + '\n';
+
+    fs.writeFileSync(outputFilePath, fileContent, 'utf8');
+
+    res.json({
+      success: true,
+      count: collections.length,
+      filePath: outputFilePath
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/debug-check-duplicates', async (req, res) => {
   try {
     const query = `

@@ -608,6 +608,76 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
 
 app.post('/api/debug-set-collection-images', async (req, res) => {
   try {
+    const fileId = "43219582877987";
+    
+    // Attempt to query the file details by searching files or querying node
+    const fileQuery = `
+      query {
+        files(first: 50) {
+          edges {
+            node {
+              id
+              ... on MediaImage {
+                image {
+                  url
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const fileRes = await client.request(fileQuery);
+    const files = fileRes.data.files.edges.map(e => e.node);
+    
+    // Find file that contains the fileId
+    const matchingFile = files.find(f => f.id.includes(fileId));
+    
+    if (!matchingFile || !matchingFile.image || !matchingFile.image.url) {
+      // Fallback: Try querying as a direct node or use general search
+      console.warn("⚠️ Could not find file in first 50 files. Attempting direct node query...");
+      
+      const nodeQuery = `
+        query($id: ID!) {
+          node(id: $id) {
+            id
+            ... on MediaImage {
+              image {
+                url
+              }
+            }
+          }
+        }
+      `;
+      
+      // Let's try both MediaImage and GenericFile GID types
+      let directUrl = null;
+      for (const prefix of ["MediaImage", "GenericFile", "File"]) {
+        try {
+          const nodeRes = await client.request(nodeQuery, { variables: { id: `gid://shopify/${prefix}/${fileId}` } });
+          if (nodeRes.data.node && nodeRes.data.node.image && nodeRes.data.node.image.url) {
+            directUrl = nodeRes.data.node.image.url;
+            console.log(`✅ Found URL using prefix ${prefix}: ${directUrl}`);
+            break;
+          }
+        } catch (e) {}
+      }
+      
+      if (!directUrl) {
+        return res.status(400).json({
+          success: false,
+          error: "Could not retrieve image URL for file ID 43219582877987",
+          filesFound: files.map(f => ({ id: f.id, url: f.image?.url }))
+        });
+      }
+      
+      matchingFile = { image: { url: directUrl } };
+    }
+
+    const imageUrl = matchingFile.image.url;
+    console.log(`📸 Using Image URL: ${imageUrl}`);
+
     const targetCollections = [
       "gid://shopify/Collection/507266597155", // 40 Series bonnets
       "gid://shopify/Collection/507509440803", // 40 Series Cabin & Support
@@ -618,8 +688,6 @@ app.post('/api/debug-set-collection-images', async (req, res) => {
       "gid://shopify/Collection/507528675619"  // 40 Series UHF Radios
     ];
 
-    const imageId = "gid://shopify/MediaImage/43219582877987";
-
     const collectionUpdateMutation = `
       mutation collectionUpdate($input: CollectionInput!) {
         collectionUpdate(input: $input) {
@@ -627,7 +695,6 @@ app.post('/api/debug-set-collection-images', async (req, res) => {
             id
             title
             image {
-              id
               url
             }
           }
@@ -648,7 +715,7 @@ app.post('/api/debug-set-collection-images', async (req, res) => {
             input: {
               id: cid,
               image: {
-                id: imageId
+                src: imageUrl
               }
             }
           }

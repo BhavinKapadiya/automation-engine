@@ -606,6 +606,75 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
+app.post('/api/debug-set-collection-images', async (req, res) => {
+  try {
+    const targetCollections = [
+      "gid://shopify/Collection/507266597155", // 40 Series bonnets
+      "gid://shopify/Collection/507509440803", // 40 Series Cabin & Support
+      "gid://shopify/Collection/507266236707", // 40 Series Doors
+      "gid://shopify/Collection/507440791843", // 40 Series Grilles
+      "gid://shopify/Collection/507509768483", // 40 Series Guards & Supports
+      "gid://shopify/Collection/507267186979", // 40 Series Lighting
+      "gid://shopify/Collection/507528675619"  // 40 Series UHF Radios
+    ];
+
+    const imageId = "gid://shopify/MediaImage/43219582877987";
+
+    const collectionUpdateMutation = `
+      mutation collectionUpdate($input: CollectionInput!) {
+        collectionUpdate(input: $input) {
+          collection {
+            id
+            title
+            image {
+              id
+              url
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    const results = [];
+
+    for (const cid of targetCollections) {
+      try {
+        const response = await client.request(collectionUpdateMutation, {
+          variables: {
+            input: {
+              id: cid,
+              image: {
+                id: imageId
+              }
+            }
+          }
+        });
+
+        const collectionUpdate = response.data.collectionUpdate;
+        if (collectionUpdate.userErrors.length > 0) {
+          results.push({ id: cid, success: false, errors: collectionUpdate.userErrors });
+        } else {
+          results.push({ id: cid, success: true, title: collectionUpdate.collection.title });
+        }
+      } catch (err) {
+        results.push({ id: cid, success: false, error: err.message });
+      }
+      await new Promise(resolve => setTimeout(resolve, 80));
+    }
+
+    res.json({
+      success: true,
+      results: results
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

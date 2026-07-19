@@ -606,22 +606,28 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
-app.get('/api/list-recommendations-assets', async (req, res) => {
+app.get('/api/list-metafield-definitions', async (req, res) => {
   try {
-    const restClient = new shopify.clients.Rest({ session });
-    const response = await restClient.get({
-      path: `themes/186366296355/assets`,
-    });
-    const assets = response.body.assets;
-    
-    const matched = assets.filter(a => 
-      a.key.includes('recommend') || 
-      a.key.includes('related') || 
-      a.key.includes('suggest') || 
-      (a.key.startsWith('sections/') && a.key.includes('product'))
-    );
-    
-    res.json({ success: true, assets: matched });
+    const GET_METAFIELD_DEFS = `
+      query {
+        metafieldDefinitions(first: 100, ownerType: PRODUCT) {
+          edges {
+            node {
+              id
+              name
+              namespace
+              key
+              type {
+                name
+              }
+              description
+            }
+          }
+        }
+      }
+    `;
+    const response = await client.request(GET_METAFIELD_DEFS);
+    res.json({ success: true, definitions: response.data.metafieldDefinitions.edges.map(e => e.node) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

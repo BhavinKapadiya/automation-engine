@@ -606,6 +606,49 @@ app.post('/api/admin/create-smart-collection', async (req, res) => {
   }
 });
 
+app.get('/api/get-all-collections', async (req, res) => {
+  try {
+    const GET_COLLECTIONS = `
+      query getCollections($first: Int!, $after: String) {
+        collections(first: $first, after: $after) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          edges {
+            node {
+              id
+              title
+              handle
+              productsCount
+            }
+          }
+        }
+      }
+    `;
+
+    console.log("🚀 Fetching all collections from Shopify...");
+    let hasNextPage = true;
+    let cursor = null;
+    const collections = [];
+
+    while (hasNextPage) {
+      const getRes = await client.request(GET_COLLECTIONS, { variables: { first: 250, after: cursor } });
+      const edges = getRes.data.collections.edges;
+      for (const edge of edges) {
+        collections.push(edge.node);
+      }
+      hasNextPage = getRes.data.collections.pageInfo.hasNextPage;
+      cursor = getRes.data.collections.pageInfo.endCursor;
+    }
+
+    console.log(`📋 Loaded ${collections.length} collections.`);
+    res.json({ success: true, collections });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
